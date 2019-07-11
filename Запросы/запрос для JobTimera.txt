@@ -1,0 +1,335 @@
+
+
+-----------------------------------------------------
+
+новая версия запроса от 08.02.2017:
+
+
+SELECT UserData.UserName, FIO, MAX_TIME, DIFF, Dept
+FROM(
+   SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF
+   FROM (
+             SELECT UserName, MAX(LogRecTime)MAX_TIME 
+             FROM AnalyticTable 
+             GROUP BY UserName
+             HAVING UserName NOT IN ('U_060JQ', 'U_060P8', 'U_M0VF2', 'U_M0CJU', 'U_M0QSU', 'U_0619Y') -- дежурные ночные + выходные
+             )    T1 
+   WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 2
+   UNION 
+   SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+   FROM (
+            SELECT UserName, MAX(LogRecTime)MAX_TIME 
+            FROM AnalyticTable 
+            GROUP BY UserName
+            HAVING UserName IN ('U_060JQ', 'U_060P8', 'U_M0VF2') -- дежурные ночные
+            )    T2 
+    WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 3
+    UNION 
+    SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+    FROM (
+              SELECT UserName, MAX(LogRecTime)MAX_TIME 
+              FROM AnalyticTable                       
+              GROUP BY UserName
+              HAVING UserName IN ('U_M0CJU', 'U_M0QSU', 'U_0619Y') -- дежурные выходные
+              )    T3 
+    WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 5
+ ) UserData
+JOIN fios ON fios.UserName = UserData.UserName AND fios.Uvolen != 1;
+
+
+/*
+ночные:
+U_060JQ Алексей Михеев
+U_060P8 Киршин Евгений
+U_M0VF2 Конюшенко Сергей
+
+выходные:
+U_M0CJU Павлов Георгий
+U_M0QSU Тимура Аканаева
+U_0619Y Юферев Роман
+
+U_M0QBU Турко Илья  уволен
+*/
+
+----------------------------------------------
+
+старая версия запроса от 08.02.2017:
+
+
+SELECT UserData.UserName, FIO, MAX_TIME, DIFF, 
+CASE WHEN DIFF = 3 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0QBU', 'U_060JQ') THEN CAST('First letter'AS CHAR) 
+     WHEN DIFF = 8 AND UserData.UserName IN ('U_M0CJU', 'U_M0QBU') THEN CAST('First letter'AS CHAR) 
+     WHEN DIFF = 5 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0QBU', 'U_060JQ') THEN CAST('Second letter' AS CHAR) 
+     WHEN DIFF = 14 AND UserData.UserName IN ('U_M0CJU', 'U_M0QBU') THEN CAST('Second letter' AS CHAR) 
+     WHEN DIFF = 7 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0QBU', 'U_060JQ') THEN CAST('Third letter' AS CHAR)  
+     WHEN DIFF = 21 AND UserData.UserName IN ('U_M0CJU', 'U_M0QBU') THEN CAST('Third letter' AS CHAR)
+ELSE ' ' END LETTER, Dept
+ FROM(
+   SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF
+   FROM (
+             SELECT UserName, MAX(LogRecTime)MAX_TIME 
+             FROM AnalyticTable 
+             GROUP BY UserName
+             HAVING UserName NOT IN ('U_M0CJU', 'U_M0QBU','U_M0QSU')
+             )    T1 
+   WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 2
+   UNION 
+   SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+   FROM (
+            SELECT UserName, MAX(LogRecTime)MAX_TIME 
+            FROM AnalyticTable 
+            GROUP BY UserName
+            HAVING UserName IN ('U_M0CJU', 'U_M0QBU','U_M0QSU')
+            )    T2 
+    WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 7
+    UNION 
+    SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+    FROM (
+              SELECT UserName, MAX(LogRecTime)MAX_TIME 
+              FROM AnalyticTable                       
+              GROUP BY UserName
+              HAVING UserName IN ('U_060JQ')
+              )    T3 
+            WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 3
+ ) UserData
+JOIN fios ON fios.UserName = UserData.UserName AND fios.Uvolen != 1;
+
+----------------------------------------------------
+
+версия запроса от 17,02,2014:
+
+
+SELECT UserData.UserName, FIO, MAX_TIME, DIFF, 
+CASE 
+WHEN DIFF = 3 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0JE8') THEN CAST('First letter'AS CHAR) 
+WHEN DIFF = 8 AND UserData.UserName IN ('U_M0CJU', 'U_M0JE8') THEN CAST('First letter'AS CHAR) 
+WHEN DIFF = 5 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0JE8', 'U_060JQ') THEN CAST('Second letter' AS CHAR) 
+WHEN DIFF = 14 AND UserData.UserName IN ('U_M0CJU', 'U_M0JE8') THEN CAST('Second letter' AS CHAR) 
+WHEN DIFF = 7 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0JE8', 'U_060JQ') THEN CAST('Third letter' AS CHAR)  
+WHEN DIFF = 21 AND UserData.UserName IN ('U_M0CJU', 'U_M0JE8') THEN CAST('Third letter' AS CHAR)
+ELSE ' ' END LETTER, 
+Dept
+FROM(
+            SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF
+            FROM (
+                  SELECT UserName, MAX(LogRecTime)MAX_TIME 
+                  FROM AnalyticTable 
+                  GROUP BY UserName
+                  HAVING UserName NOT IN ('U_M0CJU', 'U_M0JE8')
+                  )	T1 
+            WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 2
+          UNION 
+            SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+            FROM (
+                  SELECT UserName, MAX(LogRecTime)MAX_TIME 
+                  FROM AnalyticTable                       
+                  GROUP BY UserName
+                  HAVING UserName IN ('U_M0CJU', 'U_M0JE8')
+                  )	T2 
+            WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 7
+          UNION 
+            SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+            FROM (
+                  SELECT UserName, MAX(LogRecTime)MAX_TIME 
+                  FROM AnalyticTable                       
+                  GROUP BY UserName
+                  HAVING UserName IN ('U_060JQ')
+                  )	T3 
+            WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 3
+     ) UserData
+  JOIN 
+    fios 
+    ON fios.UserName = UserData.UserName AND fios.Uvolen != 1;
+
+
+-----------------------
+ИЛИ тоже самое с WITH:
+
+
+with T1
+as
+(SELECT UserName, MAX(LogRecTime)MAX_TIME 
+ FROM AnalyticTable 
+ GROUP BY UserName)
+
+SELECT UserData.UserName,FIO,MAX_TIME, DIFF, 
+CASE WHEN DIFF = 3 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0JE8') THEN CAST('First letter'AS CHAR) 
+     WHEN DIFF = 8 AND UserData.UserName IN ('U_M0CJU', 'U_M0JE8') THEN CAST('First letter'AS CHAR) 
+     WHEN DIFF = 5 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0JE8', 'U_060JQ') THEN CAST('Second letter' AS CHAR) 
+     WHEN DIFF = 14 AND UserData.UserName IN ('U_M0CJU', 'U_M0JE8') THEN CAST('Second letter' AS CHAR) 
+     WHEN DIFF = 7 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0JE8', 'U_060JQ') THEN CAST('Third letter' AS CHAR)  
+     WHEN DIFF = 21 AND UserData.UserName IN ('U_M0CJU', 'U_M0JE8') THEN CAST('Third letter' AS CHAR)
+ELSE ' '
+END LETTER , Dept
+ FROM(
+            SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF
+            FROM T1 
+            WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 2
+              AND UserName NOT IN ('U_M0CJU', 'U_M0JE8')
+UNION 
+            SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+            FROM T1 
+            WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 7
+              AND UserName IN ('U_M0CJU', 'U_M0JE8')
+UNION 
+            SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+            FROM T1 
+            WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 3
+              AND UserName IN ('U_060JQ')
+ ) UserData
+JOIN fios ON fios.UserName = UserData.UserName AND fios.Uvolen != 1
+
+
+
+
+
+---------------------------------------------------------------------------------------------------
+
+SELECT T2.UserName, FIO, MAX_TIME, DIFF 
+FROM(SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+FROM(SELECT UserName, MAX(LogRecTime)MAX_TIME FROM AnalyticTable
+GROUP BY UserName)T1)T2, fios T3
+WHERE T2.UserName = T3.UserName AND  DIFF > 7 AND Uvolen != 1
+
+
+ДЛЯ ДС:
+
+SELECT * FROM
+(SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF
+FROM (SELECT UserName, MAX(LogRecTime)MAX_TIME FROM AnalyticTable
+GROUP BY UserName HAVING UserName IN ('U_M0CJU'))T1)T2
+WHERE DIFF > 4
+
+
+
+
+SELECT T2.UserName, FIO, MAX_TIME, DIFF 
+FROM(SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+FROM(SELECT UserName, MAX(LogRecTime)MAX_TIME FROM AnalyticTable
+GROUP BY UserName HAVING UserName NOT IN ('U_M0CJU'))T1)T2, fios T3
+WHERE T2.UserName = T3.UserName AND  DIFF > 2 AND Uvolen != 1
+UNION
+SELECT T2.UserName, FIO, MAX_TIME, DIFF 
+FROM(SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+FROM(SELECT UserName, MAX(LogRecTime)MAX_TIME FROM AnalyticTable
+GROUP BY UserName HAVING UserName IN ('U_M0CJU'))T1)T2, fios T3
+WHERE T2.UserName = T3.UserName AND  DIFF > 4 AND Uvolen != 1
+
+
+
+
+
+SELECT CASE WHEN UserName NOT IN ('U_M0CJU') AND  DIFF > 2 THEN UserName END UserName, MAX_TIME, DIFF,
+CASE WHEN UserName IN ('U_M0CJU') AND  DIFF > 4 THEN UserName END UserName, MAX_TIME, DIFF
+ FROM
+(SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF
+FROM (SELECT UserName, MAX(LogRecTime)MAX_TIME FROM AnalyticTable
+GROUP BY UserName)T1)T2
+
+
+
+
+20.05.2013
+
+
+SELECT UserData.UserName, FIO, MAX_TIME, DIFF, 
+CASE WHEN DIFF = 2 OR DIFF = 7 THEN CAST('First letter'AS VARCHAR) 
+     WHEN DIFF = 4 OR DIFF = 14 THEN CAST('Second letter' AS VARCHAR) 
+     WHEN DIFF = 6 OR DIFF = 21 THEN CAST('Third letter' AS VARCHAR) 
+     ELSE CAST(DIFF AS CHAR)
+     END LETTER
+FROM
+(
+	SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF
+	  FROM
+	(
+		SELECT UserName, MAX(LogRecTime)MAX_TIME
+		  FROM AnalyticTable
+		 GROUP BY UserName
+		HAVING UserName NOT IN ('U_M0CJU')
+	)	T1
+	 WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 2
+
+	UNION
+
+	SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+	  FROM
+	(
+		SELECT UserName, MAX(LogRecTime)MAX_TIME
+		  FROM AnalyticTable
+		 GROUP BY UserName
+		HAVING UserName IN ('U_M0CJU')
+	)	T2
+	WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 7
+)	UserData
+	JOIN
+	fios ON fios.UserName = UserData.UserName AND fios.Uvolen != 1
+
+
+
+31/05/2013
+
+
+SELECT UserData.UserName, FIO, MAX_TIME, DIFF,
+ CASE WHEN DIFF = 2 OR DIFF = 7 THEN CAST('First letter'AS CHAR) 
+      WHEN DIFF = 4 OR DIFF = 14 THEN CAST('Second letter' AS CHAR) 
+      WHEN DIFF = 6 OR DIFF = 21 THEN CAST('Third letter' AS CHAR) 
+ ELSE ' ' 
+ END LETTER, Dept
+FROM (SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF
+      FROM (SELECT UserName, MAX(LogRecTime)MAX_TIME 
+            FROM AnalyticTable 
+            GROUP BY UserName
+            HAVING UserName NOT IN ('U_M0CJU'))	T1 
+WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 2
+UNION 
+SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+      FROM (SELECT UserName, MAX(LogRecTime)MAX_TIME 
+            FROM AnalyticTable GROUP BY UserName
+            HAVING UserName IN ('U_M0CJU'))	T2 
+WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 7) UserData
+JOIN 
+fios ON fios.UserName = UserData.UserName AND fios.Uvolen != 1;
+
+
+
+
+
+
+SELECT DISTINCT Dept FROM FIOS;
+
+SELECT * FROM FIOS WHERE DEPT = 'УДИТ'; 
+
+
+
+
+
+17/06/2013 дописан сотрудник ДС, изменено 3,5,7 разделен мех-м выдачи флага писем для ДС и остальных сотрудников:
+
+SELECT UserData.UserName, FIO, MAX_TIME, DIFF, 
+CASE WHEN DIFF = 3 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0JE8') THEN CAST('First letter'AS CHAR) 
+     WHEN DIFF = 8 AND UserData.UserName IN ('U_M0CJU', 'U_M0JE8') THEN CAST('First letter'AS CHAR) 
+     WHEN DIFF = 5 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0JE8') THEN CAST('Second letter' AS CHAR) 
+     WHEN DIFF = 14 AND UserData.UserName IN ('U_M0CJU', 'U_M0JE8') THEN CAST('Second letter' AS CHAR) 
+     WHEN DIFF = 7 AND UserData.UserName NOT IN ('U_M0CJU', 'U_M0JE8') THEN CAST('Third letter' AS CHAR)  
+     WHEN DIFF = 21 AND UserData.UserName IN ('U_M0CJU', 'U_M0JE8') THEN CAST('Third letter' AS CHAR)
+ELSE ' '
+END LETTER, Dept
+ FROM(
+       SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF
+   FROM (
+         SELECT UserName, MAX(LogRecTime)MAX_TIME FROM AnalyticTable GROUP BY UserName
+         HAVING UserName NOT IN ('U_M0CJU', 'U_M0JE8'))	T1 
+   WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 2
+   UNION 
+   SELECT UserName, MAX_TIME, DATEDIFF(DAY, MAX_TIME, GETDATE()) DIFF 
+   FROM (
+        SELECT UserName, MAX(LogRecTime)MAX_TIME 
+        FROM AnalyticTable 
+        GROUP BY UserName
+        HAVING UserName IN ('U_M0CJU', 'U_M0JE8')
+        )	T2 
+   WHERE DATEDIFF(DAY, MAX_TIME, GETDATE()) > 7
+ ) UserData
+JOIN fios ON fios.UserName = UserData.UserName AND fios.Uvolen != 1
+

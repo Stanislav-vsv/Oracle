@@ -1,0 +1,28 @@
+
+
+--вывод отчета за дату, когда былы последняя ошибка
+
+
+select 
+     DQ_LIST.REV_NAME AS "Название проверки",
+     DQ_MAIN.REV_DATE AS "Дата проверки ",
+     DQ_MAIN.REV_DATETIME AS "Время проверки ",
+     DQ_MAIN.F_NUM1 AS "По проводкам ",
+     DQ_MAIN.F_NUM2 AS "По остаткам",
+     DQ_MAIN.F_NUM3 AS "Разность",
+     DQ_MAIN.ERROR_FLAG AS "Ошибка",
+     DQ_MAIN.F_STR3 AS "Детали",
+     DQ_MAIN.F_STR4 AS "Комментарий",
+     DQ_MAIN.F_STR2 AS "Отчетная дата " 
+     from 
+     dq_list,
+     dq_main 
+     where 
+     dq_main.list_id= dq_list.list_id 
+     and dq_list.list_id = 505 
+     and REV_ID in ( SELECT  rev_id
+ FROM dq_main  WHERE  LIST_ID = 505 
+ AND TO_DATE(REV_DATETIME, 'DD.MM.YYYY HH24:MI:SS' ) IN 
+( SELECT DISTINCT MAX_DATE FROM
+ ( SELECT list_id,    rev_id,    rev_datetime, MAX(TO_DATE(REV_DATETIME, 'DD.MM.YYYY HH24:MI:SS' ) ) OVER (PARTITION BY LIST_ID) MAX_DATE
+ FROM dq_main  WHERE pre = 0 AND ERROR_FLAG =1 AND  LIST_ID = 505 ) ));  

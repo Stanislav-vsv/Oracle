@@ -1,0 +1,23 @@
+
+
+--today
+select VALUE_DATE as "DATE", RESULT_NUM1/100000 as "VALUE/100000" 
+from
+DQ_DETAILJOURNAL_TRAN_DWMON
+WHERE (VALUE_DATE, XK) IN
+(
+ select VALUE_DATE, max(XK) 
+ from DQ_DETAILJOURNAL_TRAN_DWMON 
+ where DQ_CONTROL_UK=63
+ group by VALUE_DATE
+)
+order by VALUE_DATE asc;
+
+
+--history
+select VALUE_DATE as "DATE", max(RESULT_NUM1)/1000000 as "maxVALUE/1000000"  
+from 
+DQ_DETAILJOURNAL_TRAN_DWMON
+where DQ_CONTROL_UK=63
+group by VALUE_DATE;
+
