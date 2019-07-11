@@ -1,0 +1,8 @@
+
+
+SELECT * FROM (  
+SELECT A.*, NUM-N, TO_NUMBER('0') RAZN FROM (SELECT ROWNUM N, NUM FROM ( SELECT LEVEL NUM FROM DUAL CONNECT BY LEVEL < 150 )
+WHERE NUM/2 - ROUND(NUM/2, 0) != 0 
+AND NUM/3 - ROUND(NUM/3, 0) != 0                                                                                                                                
+AND NUM/5 - ROUND(NUM/5, 0) != 0                                                                                                                                
+OR NUM IN (2, 3, 5))A)
