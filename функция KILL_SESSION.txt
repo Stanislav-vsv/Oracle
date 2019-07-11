@@ -1,0 +1,3 @@
+
+
+exec SYS.PRIVS_MGMT.KILL_SESSION(sid, serialNum);

@@ -1,0 +1,10 @@
+
+Тригер на добавление строки в таблицу:
+
+CREATE OR REPLACE TRIGGER TR_DQ_CONTROL_HDIM
+before insert on DQ_CONTROL_HDIM
+  for each row
+BEGIN
+   INSERT INTO MONITORING.DQ_CONTROL_HDIM_LOG (TP,table_name, who, when ) values('DEL','DQ_MAIN',(SELECT SYS_CONTEXT('USERENV','OS_USER') From DUAL), sysdate );
+END;
+/

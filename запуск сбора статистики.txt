@@ -1,0 +1,5 @@
+
+
+запрос на запуск сбора статистики по таблице (с согласованием, руков-ва или инициатора):
+
+DBMS_STATS.GATHER_TABLE_STATS(ownname => , tabname, estimate_percent => 0.01)

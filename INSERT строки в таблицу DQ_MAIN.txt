@@ -1,0 +1,28 @@
+
+Сначала смотрим, что записано в таблице dq_main за нужную нам дату:
+
+select to_date(f_str1), rev_id, f_num1
+from dq_main 
+where list_id=527 and to_date(f_str1)>='20.03.2013'
+ORDER by 1,2 ; 
+
+
+Потом всталяем строку с нужной датой и нулевым значением для нашей проверки (ID генерится автоматически и т.к. он
+самый новый, то запрос для графика выбирает эту строку с нулем):
+
+insert into dq_main 
+(f_str1, f_num1, list_id)
+values 
+('20.03.2013',0,527);
+
+
+
+select * 
+from dq_main 
+where list_id=501 and to_date(f_str2)='01.05.13'
+ORDER by 1,2 ; 
+
+insert into dq_main 
+(f_str2, f_num3, list_id)
+values 
+('01.05.13',0,501);

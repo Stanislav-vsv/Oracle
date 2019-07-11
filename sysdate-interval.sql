@@ -1,0 +1,1 @@
+select to_char(sysdate - interval '1' month,'YYMM') from dual

@@ -1,0 +1,6 @@
+alter session disable parallel dml;
+alter session disable parallel query;
+
+и сам запрос;
+
+запускаем последовательно эти строчки и запрос.
