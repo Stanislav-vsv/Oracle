@@ -1,0 +1,14 @@
+
+
+-- создание таблицы с автоназначением ID, для MySQL
+CREATE TABLE tblname (
+  id integer unsigned AUTO_INCREMENT,
+...
+
+
+-- создание таблицы с автоназначением ID
+create table tblseq(
+id serial,
+num  double precision,
+constraint pk_tblseq primary key (id)
+);

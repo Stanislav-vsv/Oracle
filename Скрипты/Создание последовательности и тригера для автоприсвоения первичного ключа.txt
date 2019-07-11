@@ -1,0 +1,15 @@
+
+-- создаем последовательность
+-- с параметрами по умолчанию
+CREATE SEQUENCE seq;
+
+
+-- Чтобы сделать присваивание значения первичного ключа автоматическим создаем тригер tblseq_autoid
+
+create or replace trigger название_тригера
+  before insert on название_таблицы  
+  for each row
+declare
+begin
+  select seq.nextval into  :new.id from dual;
+end название_тригера;

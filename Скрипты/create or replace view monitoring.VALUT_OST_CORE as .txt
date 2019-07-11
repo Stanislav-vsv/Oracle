@@ -1,0 +1,49 @@
+DROP VIEW MONITORING.VALUT_OST_CORE;
+
+/* Formatted on 26.02.2013 14:12:44 (QP5 v5.163.1008.3004) */
+CREATE OR REPLACE FORCE VIEW MONITORING.VALUT_OST_CORE
+(
+   REV_ID,
+   LIST_ID,
+   REV_DATE,
+   REV_DATETIME,
+   F_STR1,
+   ERROR_FLAG
+)
+AS
+   SELECT 2 rev_id,
+          703 list_id,
+          TO_NUMBER (TO_CHAR (SYSDATE, 'yyyymmdd')) rev_date,
+          TO_CHAR (SYSDATE, 'dd.mm.yyyy hh24:mi:ss') rev_datetime,
+          CASE
+             WHEN cnt = 0
+             THEN
+                '«аполнение валютного остатка на ядре корректно'
+             ELSE
+                'ќшибка'
+          END
+             AS F_STR1,
+          CASE WHEN cnt = 0 THEN 0 ELSE 1 END AS error_flag
+     FROM (SELECT COUNT (*) cnt
+             FROM dwh.balance_hstat ost
+                  JOIN dwh.account_hdim acc
+                     ON ost.account_uk = acc.uk AND acc.deleted_flag = 'N'
+                        AND acc.validto =
+                               TO_DATE ('31.12.5999', 'DD.MM.YYYY')
+                  JOIN DWH.SALESPLACE_HDIM bch
+                     ON acc.salesplace_uk = bch.uk AND bch.deleted_flag = 'N'
+                        AND bch.validto =
+                               TO_DATE ('31.12.5999', 'DD.MM.YYYY')
+                        AND bch.BRANCH_ODS_NCODE <> 10004
+                  JOIN DWH.GL2ACCOUNT_HDIM gl2
+                     ON ACC.GL2ACCOUNT_UK = gl2.uk AND gl2.deleted_flag = 'N'
+                        AND gl2.validto =
+                               TO_DATE ('31.12.5999', 'DD.MM.YYYY')
+                        AND GL2.NCODE NOT LIKE '9%'
+            WHERE ost.value_day BETWEEN TRUNC (SYSDATE - 7)
+                                    AND TRUNC (SYSDATE - 1)
+                  AND ost.deleted_flag = 'N'
+                  AND ost.validto = TO_DATE ('31.12.5999', 'DD.MM.YYYY')
+                  AND acc.account_number NOT LIKE '55555%'
+                  AND balance_amt_rur > 0
+                  AND balance_amt_cur = 0);

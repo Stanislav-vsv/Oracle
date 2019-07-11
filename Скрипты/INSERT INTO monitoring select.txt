@@ -1,0 +1,9 @@
+INSERT INTO monitoring.DQ_MAIN (rev_id,
+                            list_id,
+                            rev_date,
+                            rev_datetime,
+                            F_STR1,
+                            error_flag,
+                            F_STR2, pre)
+                  
+               select a.*,0 from monitoring.VALUT_OST_CORE@DW_ST_PROD a;

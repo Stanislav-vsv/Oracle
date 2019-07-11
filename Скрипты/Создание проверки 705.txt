@@ -1,0 +1,111 @@
+
+1. Вставляем строку в DQ_LIST, с параметрами проверки:
+
+
+insert into MONITORING.DQ_LIST ( LIST_ID,  REV_NAME,  DESCR,  DIMENSIONS,  REGLAMENT,  SQL_SCRIPT,  DEVELOPER, 
+                                 COMMENTS,  REP_SYSTEM,  LIST_ID_DATA,  GROUP_NAME,  GROUP_ORDER,  LIST_ORDER, 
+                                 TYPE_ID,  VISIBLE,  NEW_DQ,  ODS_ACRM,  PRELIFE,  SQL_QUERY)
+        
+values (705, 'Сверка баланса в КРМ(DMOUT) и ФВ', 'Сверка баланса в КРМ(DMOUT) и ФВ', NULL, NULL, NULL, 'Волков С.В.' ,
+        NULL,  'KRM', 1, 'Сверка баланса в КРМ(DMOUT) и ФВ', 21, 1, 1, 1, 3, 0, 1, NULL)        
+
+
+
+2. Вставляем строки в DQ_HEADINGS, с описанием столбцов вставляемых на портал, из DQ_LIST или DQ_MAIN: 
+
+
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values( 705, 1, 'DQ_LIST',  'REV_NAME', 'Название проверки', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(705, 2, 'DQ_MAIN',  'rev_date', 'Дата запуска', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(705, 3, 'DQ_MAIN', 'rev_datetime', 'Время запуска', 1, NULL);
+
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(705, 4, 'DQ_MAIN', 'F_STR1', 'value_day', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(705, 5, 'DQ_MAIN', 'F_NUM1', 'сумма в финвитрине', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(705, 6, 'DQ_MAIN', 'F_NUM2', 'статья', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(705, 7, 'DQ_MAIN', 'F_NUM3', 'дельта', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(705, 8, 'DQ_MAIN', 'F_NUM4', 'сумма в KRM', 1, NULL);
+
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(705, 9, 'DQ_MAIN', 'F_STR2', 'Детали', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(705, 10, 'DQ_MAIN', 'error_flag', 'Ошибка', 1, NULL)
+
+
+                           
+просмотр проверки через айдишник:
+http://albertw:8080/dq/dit_revision.php?list_id=705
+                        
+                           
+3. Если проверка может выдать большое колличество строк, которое может переполнить таблицу DQ_MAIN, то надо
+   добавить условие на превышение колличества строк. Если кол-во больше 1000 транзакция откатывается назад и 
+   вставляется строка, с сообщением о переполнении. Пример проверка 705
+
+ IF SQL%ROWCOUNT > 1000
+   THEN
+      INSERT INTO monitoring.DQ_MAIN (rev_id,
+                                      list_id,
+                                      rev_date,
+                                      rev_datetime,
+                                      F_STR1,
+                                      F_NUM1,
+                                      F_NUM2,
+                                      F_NUM3,
+                                      F_NUM4,
+                                      F_STR2,
+                                      error_flag)
+         SELECT 2 AS rev_id,
+                705 AS list_id,
+                TO_NUMBER (TO_CHAR (SYSDATE, 'yyyymmdd')) rev_date,
+                TO_CHAR (SYSDATE, 'dd.mm.yyyy hh24:mi:ss') rev_datetime,
+                'проверка остановлена в связи с привышением количества строк' F_STR1,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                '<A href=''http://albertw:8080/dq/dit_revision.php?list_id=705''>Детали>></A>'
+                   AS F_STR2,
+                1 error_flag
+           FROM DUAL; 
+     END IF;
+
+ IF SQL%ROWCOUNT > 1000  
+   THEN
+      ROLLBACK;
+     END IF;
+
+         COMMIT;
+      END;                             
+                           
+                           
+   
+
+ЗАПРОС ДЛЯ ГЕНЕРАЦИИ ОТЧЕТА И ФАЙЛЕ MONDQ.INI НА INFAP-T:   
+
+SELECT DQ_LIST.REV_NAME,DQ_MAIN.rev_date,DQ_MAIN.rev_datetime,DQ_MAIN.F_STR1,DQ_MAIN.F_NUM1,
+DQ_MAIN.F_NUM2,DQ_MAIN.F_NUM3,DQ_MAIN.F_NUM4, DQ_MAIN.F_STR2
+FROM dq_list, dq_main where dq_main.list_id = dq_list.list_id AND dq_list.list_id = 705
+and to_date(rev_date, 'yyyymmdd') = (select max(to_date(rev_date, 'yyyymmdd')) from dq_main where list_id = 705)
+order by to_date(rev_date, 'yyyymmdd') desc;
+
+
+1=SELECT DQ_LIST.REV_NAME,DQ_MAIN.rev_date,DQ_MAIN.rev_datetime,DQ_MAIN.F_STR1,DQ_MAIN.F_NUM1,
+2=DQ_MAIN.F_NUM2,DQ_MAIN.F_NUM3,DQ_MAIN.F_NUM4, DQ_MAIN.F_STR2
+3=FROM dq_list, dq_main where dq_main.list_id = dq_list.list_id AND dq_list.list_id = 705
+4=and to_date(rev_date, 'yyyymmdd') = (select max(to_date(rev_date, 'yyyymmdd')) from dq_main where list_id = 705)  
+
+
+
+
+
+
+
+
+
+                    

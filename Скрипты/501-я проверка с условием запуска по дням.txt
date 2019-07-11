@@ -1,0 +1,32 @@
+
+
+DECLARE
+   env   INT;
+BEGIN
+   env := 0;
+   
+   IF TO_CHAR(SYSDATE, 'D') IN (3,4,5,7) 
+      THEN         
+   INSERT INTO monitoring.DQ_MAIN (rev_id,
+                                   list_id,
+                                   rev_date,
+                                   rev_datetime,
+                                   F_STR1,
+                                   F_STR2,
+                                   F_NUM1,
+                                   F_NUM2,
+                                   F_NUM3,
+                                   error_flag,
+                                   F_STR3,
+                                   pre)
+
+     select a.*,
+                 '<A href=''http://albertw:8080/dq/dit_revision.php?list_id=501''>Детали>></A>'  AS F_STR3,
+                 env 
+                 from MONITORING.SVER_PROV_CORE_DMFR_501@DW_ST_PROD a;
+                 
+                 
+     ELSE SELECT 0 INTO ENV FROM DUAL  ;           
+     END IF;           
+   COMMIT;
+   END;

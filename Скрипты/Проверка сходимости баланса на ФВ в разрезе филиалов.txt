@@ -1,0 +1,11 @@
+
+select f_str2, sum(abs(f_str4)) f_str4 from
+(select  cast(f_str4 as number) f_str4, cast(f_str2 as date) f_str2
+from dq_main where list_id=531
+union
+select 0 f_str4, date '2012-09-29' + level -1 dat
+from dual
+connect by  date '2012-09-29' + level -1<= (select max(cast(f_str2 as date))
+from dq_main where list_id=531))
+group by f_str2
+order by f_str2 asc 

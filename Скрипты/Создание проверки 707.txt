@@ -1,0 +1,120 @@
+
+DECLARE
+  fl number;
+  env int;
+begin
+  sys.DBMS_APPLICATION_INFO.set_action ('CHECK_QCUAT_K707');
+  fl := 0;
+  env := ENVIRONMENT;
+       INSERT INTO monitoring.DQ_MAIN (rev_id,
+                            list_id,
+                            rev_date,
+                            rev_datetime,
+                            F_STR3, --msg
+                            F_STR1, --tab
+                            F_STR2, --dday
+                            F_NUM1, --cnt_yes
+                            F_NUM2, --cnt_today
+                            error_flag,
+                            f_str4, 
+                            pre)
+                            
+   select           2, --rev_id
+                     707, --list_id
+                     TO_NUMBER (TO_CHAR (VALUE_DAY, 'yyyymmdd')), --rev_date
+                     TO_CHAR (SYSDATE, 'dd.mm.yyyy hh24:mi:ss'), --rev_datetime
+                     case when t.err='ok' then '' else 'Количество остатков в DMFR.ADJUSTMENTPL_VHIST за отчетную дату отличается от прошлого запуска более чем на 10%'  end AS MSG, --f_str3
+                     t.tab, --f_str1 
+                     t.dday, --f_str2
+                     t.CNT_WEDNESDAY_PREVIOUS, --f_num1
+                     t.CNT_WEDNESDAY_NOW, --f_num2
+                     case when t.err='err' then 1 else 0 end error_flag, --error_flag
+                     '<A href=''http://albertw:8080/dq/dit_revision.php?list_id=707''>Детали>></A> ',
+                     env
+           from    (      
+                      SELECT VALUE_DAY, 'DMFR.ADJUSTMENTPL_VHIST' TAB,
+       TO_CHAR (SYSDATE, 'dd.mm.yyyy hh24:mi:ss') DDAY,
+       CNT_WEDNESDAY_PREVIOUS,
+       CNT_WEDNESDAY_NOW,
+       CASE
+          WHEN CNT_WEDNESDAY_NOW BETWEEN CNT_WEDNESDAY_PREVIOUS * 0.9
+                                     AND CNT_WEDNESDAY_PREVIOUS * 1.1
+          THEN
+             'ok'
+          ELSE
+             'err'
+       END
+          ERR
+  FROM (SELECT COUNT (*) CNT_WEDNESDAY_PREVIOUS
+          FROM DMFR.ADJUSTMENTPL_VHIST@DW_ST_PROD
+         WHERE emix = 241
+               AND VALUE_DAY IN (SELECT TRUNC (report_period_end, 'MM') - 1
+                                   FROM (  SELECT report_period_end
+                                             FROM UM.LOADING_PERIOD@DW_INF_PROD
+                                            WHERE workflow_name =
+                                                     'WF_CTL_DMFR_COMP_REF_LOADING_M'
+                                         ORDER BY operation_day DESC)
+                                  WHERE ROWNUM = 1)),
+       (SELECT  DISTINCT VALUE_DAY, COUNT (*) OVER() CNT_WEDNESDAY_NOW
+          FROM DMFR.ADJUSTMENTPL_VHIST@DW_ST_PROD
+         WHERE emix = 241
+               AND VALUE_DAY IN (SELECT report_period_end
+                                   FROM (  SELECT report_period_end
+                                             FROM UM.LOADING_PERIOD@DW_INF_PROD
+                                            WHERE workflow_name =
+                                                     'WF_CTL_DMFR_COMP_REF_LOADING_M'
+                                         ORDER BY operation_day DESC)
+                                  WHERE ROWNUM = 1))
+                      )T;                           
+  commit;                    
+  end; 
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+INSERT INTO DQ_LIST ( LIST_ID,  REV_NAME,  DESCR,  DIMENSIONS,  REGLAMENT,  SQL_SCRIPT,  DEVELOPER, 
+                                 COMMENTS,  REP_SYSTEM,  LIST_ID_DATA,  GROUP_NAME,  GROUP_ORDER,  LIST_ORDER, 
+                                 TYPE_ID,  VISIBLE,  NEW_DQ,  ODS_ACRM,  PRELIFE,  SQL_QUERY)
+VALUES (707, 'Наличие записей в DMFR.ADJUSTMENTPL_VHIST по компенсациям за отчетный месяц' , 'Наличие записей в DMFR.ADJUSTMENTPL_VHIST по компенсациям за отчетный месяц', NULL, NULL, NULL, 'Волков С.В.' ,
+        NULL,  'Core', 1, 'Наличие записей в таблице', 15, 5, 9, 1, 1, 0, 0, NULL);
+  
+   
+
+  
+-------------------------------------------------------------------------------------------------------------------------------------        
+    
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values( 707, 1, 'DQ_LIST',  'REV_NAME', 'Название проверки', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(707, 2, 'DQ_MAIN',  'rev_date', 'Отчетная дата', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(707, 3, 'DQ_MAIN', 'rev_datetime', 'Дата проверки', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(707, 4, 'DQ_MAIN', 'F_STR3', 'Коментарий', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(707, 5, 'DQ_MAIN', 'F_STR1', 'Таблица', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(707, 6, 'DQ_MAIN', 'F_STR2', 'Дата запуска проверки', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(707, 7, 'DQ_MAIN', 'F_NUM1', 'Записей за пр. запуск', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(707, 8, 'DQ_MAIN', 'F_NUM2', 'Записей сегодня', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(707, 9, 'DQ_MAIN', 'ERROR_FLAG', 'Ошибка', 1, NULL);
+insert into MONITORING.DQ_HEADINGS ( LIST_ID, SORT_NUM, TABLE_NAME, FIELD_NAME, COLUMN_NAME, REP_FLAG, DESCR)
+values(707, 10, 'DQ_MAIN', 'F_STR4', 'Детали', 1, NULL);
+       
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+DBLink на базу UM из Мониторинга: DW_INF_PROD
+
+
+
+
+
+

@@ -1,0 +1,4 @@
+
+-- создаем индекс ind_tblname_d для таблицы
+
+CREATE INDEX ind_tblname_d ON название_таблицы (название_столбца);
